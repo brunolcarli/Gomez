@@ -79,3 +79,4 @@ script.txt
 *.pyc
 *.cpython-36.pyc
 ratatoskr/.vscode/launch.json
+.env
