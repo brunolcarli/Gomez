@@ -4,6 +4,9 @@ import json
 import ast
 from random import choice, randint
 from core.settings import TOKEN, LISA_URL
+import redis
+
+MESSAGE_SPAM_FILTER = redis.Redis(db=10)
 
 
 def answer_mention(bot, update):
