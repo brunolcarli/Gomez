@@ -6,6 +6,8 @@ from random import choice, randint
 from core.settings import TOKEN, LISA_URL, MESSAGE_SPAM_FILTER
 
 
+lawton_is_blocked = False
+
 def answer_mention(bot, update):
     '''
         Answers a mention message
