@@ -13,6 +13,36 @@ MESSAGE_SPAM_FILTER = redis.Redis(db=10)
 
 lawton_is_blocked = False
 
+def answer_mention(bot, update):
+    '''
+        Answers a mention message
+    '''
+    chat_id = update.message.chat_id
+    text = update.message.text
+
+    if '@GomezAddamsBot' in text:
+        _, message = text.split('@GomezAddamsBot')
+
+        # Solicita resposta de wernicke  à Lisa
+        part_1 = "{\"query\":\"mutation{\\n  askGomez(input:{\\n    question: \\\""
+        part_2 = "\\\"\\n  }){\\n    response\\n  }\\n}\"}"
+        mutation = part_1 + message + part_2
+        headers = {
+            'content-type': "application/json"
+        }
+
+        response = requests.request("POST", LISA_URL, data=mutation, headers=headers)
+        response = json.loads(response.text)
+
+        try:
+            wernicke_response = response['data']['askGomez'].get('response')
+        except:
+            wernicke_response = 'Desculpe a Lisa está dodói...'
+
+
+        bot.send_message(chat_id=chat_id, text=wernicke_response)
+
+
 def learn(bot, update):
     chat_id = update.message.chat_id
     message = update.message.text
@@ -209,6 +239,7 @@ def main():
     dp.add_handler(CommandHandler('block_lawton', block_lawton))
     dp.add_handler(CommandHandler('unblock_lawton', unblock_lawton))
     dp.add_handler(CommandHandler('frase_do_lawton', frase_do_lawton))
+    dp.add_handler(MessageHandler(Filters.text, answer_mention))
     dp.add_handler(MessageHandler(
         Filters.video | Filters.photo | Filters.document | Filters.sticker, spam_clean)
     )
