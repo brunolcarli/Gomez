@@ -3,10 +3,7 @@ import requests
 import json
 import ast
 from random import choice, randint
-from core.settings import TOKEN, LISA_URL
-import redis
-
-MESSAGE_SPAM_FILTER = redis.Redis(db=10)
+from core.settings import TOKEN, LISA_URL, MESSAGE_SPAM_FILTER
 
 
 def answer_mention(bot, update):
@@ -111,17 +108,13 @@ def spam_clean(bot, update):
             chat_id=chat_id,
             message_id=message_id,
         )
+
     else:
-        if str(user_id).encode('utf-8') in MESSAGE_SPAM_FILTER.keys():
-            user_data = ast.literal_eval(
-                MESSAGE_SPAM_FILTER.get(user_id).decode('utf-8')
-            )
+        if user_id in MESSAGE_SPAM_FILTER.keys():
+            user_data = MESSAGE_SPAM_FILTER.get(user_id)
             user_data['messages'].append(message_id)
-            MESSAGE_SPAM_FILTER.set(
-                user_id,
-                str(user_data),
-                ex=60
-            )
+
+            MESSAGE_SPAM_FILTER[user_id] = user_data
 
             # verifica o número de mensagens enviadas pelo usuário nos últimos 30s
             num_messages = len(user_data['messages'])
@@ -142,18 +135,14 @@ def spam_clean(bot, update):
                         chat_id=chat_id,
                         message_id=message,
                     )
-                MESSAGE_SPAM_FILTER.delete(user_id)
+                MESSAGE_SPAM_FILTER.pop(user_id)
             
         else:
             user_data = {
                 'name': name,
                 'messages': [message_id]
             }
-            MESSAGE_SPAM_FILTER.set(
-                user_id,
-                str(user_data),
-                ex=300
-            )
+            MESSAGE_SPAM_FILTER[user_id] = user_data
 
 def ping(bot, update):
     '''
