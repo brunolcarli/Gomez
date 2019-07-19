@@ -44,6 +44,9 @@ def answer_mention(bot, update):
 
 
 def learn(bot, update):
+    '''
+        Learn all sent messages in the chat.
+    '''
     chat_id = update.message.chat_id
     message = update.message.text
 
