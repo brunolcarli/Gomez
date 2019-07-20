@@ -95,57 +95,6 @@ def unblock_lawton(bot, update):
     text = 'Lawters agora está liberado para mandar fotos.'
     return bot.send_message(chat_id=chat_id, text=text)
 
-def spam_clean(bot, update):
-    chat_id = update.message.chat_id
-    sender = update['message'].to_dict().get('from')
-    first_name = sender.get('first_name')
-    last_name = sender.get('last_name')
-    name = '{} {}'.format(first_name, last_name)
-
-    user_id = sender.get('id')
-    message_id = update['message']['message_id']
-
-    if 'lawton' in name.lower() and lawton_is_blocked:
-        bot.delete_message(
-            chat_id=chat_id,
-            message_id=message_id,
-        )
-
-    else:
-        if user_id in MESSAGE_SPAM_FILTER.keys():
-            user_data = MESSAGE_SPAM_FILTER.get(user_id)
-            user_data['messages'].append(message_id)
-
-            MESSAGE_SPAM_FILTER[user_id] = user_data
-
-            # verifica o número de mensagens enviadas pelo usuário nos últimos 30s
-            num_messages = len(user_data['messages'])
-
-            if num_messages > 5 and num_messages < 10:
-                text = 'Você está mandando muitas mensagens {}.'.format(
-                    name
-                )
-                return bot.send_message(chat_id=chat_id, text=text)
-
-            elif num_messages >= 10:
-                text='Você mandou mensagens demais {}, estou apagando-as.'.format(
-                    name
-                )
-                bot.send_message(chat_id=chat_id, text=text)
-                for message in user_data['messages']:
-                    bot.delete_message(
-                        chat_id=chat_id,
-                        message_id=message,
-                    )
-                MESSAGE_SPAM_FILTER.pop(user_id)
-            
-        else:
-            user_data = {
-                'name': name,
-                'messages': [message_id]
-            }
-            MESSAGE_SPAM_FILTER[user_id] = user_data
-
 def ping(bot, update):
     '''
         Pings the bot
@@ -180,6 +129,50 @@ def quote(bot, update):
         response = bytes.fromhex(response).decode('utf-8')
 
         return bot.send_message(chat_id=chat_id, text=response)
+
+
+data = []
+xinga=["paquita do capeta!", "espantalho do fandangos", "bife de rato", "saco de vacilo", "saco de lixo de peruca", "geladinho de chorume", "bafo de bunda", "metralhadora de bosta", "sofá de zona", "filhote de lombriga", "cara de cu com cãibra", "vai coçar o cu com serrote", "enfia um rojão no cu e sai voando", "você não vale o peido de uma jumenta", "você nasceu pelo cu", "vai chupar um prego até virar tachinha", "vai arrastar o cu na brita", "você come pizza com colher", "arrombado do caralho", "chifrudo", "sua mãe tem pelo no dente", "o padre te benzeu com agua parada", "seu monte de esterco", "seu pai vende carta de magic roubada pra ver site porno na lan house"]
+def logger(bot, update):
+    #bot.send_message(chat_id=update.message.chat_id, text=msg)
+    msg=str(update.message.chat_id)+":"+str(update.message.from_user.id)+":"+str(update.message.message_id)
+    print ("[!][logger] " + msg)
+    data.append(msg)
+    Timer(msg_interval, noflood, [bot, update]).start()
+
+def deleteMsgs(bot, update, msgIDs):
+    chat_id=str(update.message.chat_id)
+    user_id=str(update.message.from_user.id)
+    for msg in msgIDs[msg_flood:]:
+        Thread(target=deleteMsg, args=(bot, update, int(msg),),).start()
+    msg="[!] Cala a boca " + str(update.message.from_user.first_name) + ", " + str(random.choice(xinga)) + "!"
+    bot.send_message(chat_id,msg)
+
+def deleteMsg(bot, update, msgId):
+    chat_id=update.message.chat_id
+    print ("[!][deleteMsg] Deleting => " + str(msgId))
+    bot.delete_message(chat_id=chat_id, message_id=msgId)
+
+def noflood(bot, update):
+    chat_id=str(update.message.chat_id)
+    user_id=str(update.message.from_user.id)
+    counter = 0
+    msgIds = []
+    for i, item in enumerate(data):
+#        print(chat_id+":"+user_id)
+        print(item)
+        if (chat_id + ":" + user_id) in item:
+            msgIds.append((data[i].split(":")[2]))
+            counter += 1
+    if counter >= msg_flood:
+#        msg="[!] Cala a boca " + str(update.message.from_user.first_name) + ", " + str(xinga[randint(0, 23)]) + "!"
+#        bot.send_message(chat_id,msg)
+        data.clear()
+#        for msg in msgIds[msg_flood:]:
+#            Thread(target=deleteMsg, args=(bot, update, int(msg),),).start()
+        deleteMsgs(bot, update,msgIds)
+    elif counter < msg_flood:
+        data.clear()
 
 def random_quote(bot, update):
     '''
@@ -230,8 +223,8 @@ def run():
     dp.add_handler(CommandHandler('frase_do_lawton', frase_do_lawton))
     dp.add_handler(MessageHandler(Filters.text, answer_mention))
     dp.add_handler(MessageHandler(
-        Filters.video | Filters.photo | Filters.document | Filters.sticker, spam_clean)
-    )
+        Filters.animation | Filters.photo | Filters.video, logger
+    ))
     dp.add_handler(MessageHandler(Filters.text, learn))
     
     # dp.add_handler(MessageHandler(Filters.all, spam_clean))
