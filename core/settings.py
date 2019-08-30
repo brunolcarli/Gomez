@@ -8,4 +8,4 @@ from expiringdict import ExpiringDict
 MESSAGE_SPAM_FILTER = ExpiringDict(max_len=500, max_age_seconds=30)
 
 TOKEN = config('TOKEN')
-LISA_URL = config('LISA')
+# LISA_URL = config('LISA')
